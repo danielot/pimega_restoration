@@ -1,5 +1,5 @@
 %% Read data
-raw_data = h5read('grid_01.hdf5','/data');
+raw_data = h5read('EMA/grid_01.hdf5','/data');
 
 
 %% Clean up data

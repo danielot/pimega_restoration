@@ -1,5 +1,5 @@
 %% Read data
-raw_data = double(h5read('raw_center.h5','/entry/data/data'));
+raw_data = double(h5read('EMA/raw_center.h5','/entry/data/data'));
 
 
 %% Clean up data

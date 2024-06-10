@@ -85,25 +85,19 @@ end
 % Assemble chip sets
 chip_data = pimega_chip_data(raw_data_filtered, px_array, chip_array);
 
-% Assemble hexa sets and add gaps between chips with nominal spacing
+% Assemble hexa sets and add gaps between chips
 hexa_data = pimega_hexa_data(chip_data, chip_array, chip_gap, hexa_array);
 
 hexa_ref = cell(size(hexa_data));
-hexa_x_ref = cell(size(hexa_data));
-hexa_y_ref = cell(size(hexa_data));
 for i=1:numel(hexa_data)
     hexa_ref{i} = repmat(i, size(hexa_data{i}));
-    hexa_x_ref{i} = 1:size(hexa_data{i},2);
-    hexa_y_ref{i} = 1:size(hexa_data{i},1);
 end
 
-% Assemble module sets and add gaps between hexas with nominal spacing
+% Assemble module sets and add gaps between hexas
 module_data = pimega_module_data(hexa_data, hexa_array, hexa_gap, module_array);
 module_hexa_ref = pimega_module_data(hexa_ref, hexa_array, hexa_gap, module_array);
-module_hexa_x_ref = pimega_module_data(hexa_x_ref, hexa_array, hexa_gap, module_array);
-module_hexa_y_ref = pimega_module_data(hexa_y_ref, hexa_array, hexa_gap, module_array);
 
-%% Assemble PIMEGA 540D detector by applying nominal rotations of modules and add gaps between modules with nominal spacing
+%% Assemble PIMEGA 540D detector by applying nominal rotations of modules and add gaps between modules
 detector_data = pimega_540d_data(module_data, module_gap_x, module_gap_y);
 detector_hexa_ref = pimega_540d_data(module_hexa_ref, module_gap_x, module_gap_y);
 [x_hexa,y_hexa,hexa_centers] = find_hexa_position(detector_hexa_ref, 1:numel(hexa_data));
@@ -119,18 +113,19 @@ xy = [xmesh(:)'; ymesh(:)'];
 Mrot = [cos(grid_rot_angle) -sin(grid_rot_angle); sin(grid_rot_angle) cos(grid_rot_angle)];
 Mhshear = [1 tan(grid_shear_angle); 0 1];
 xyrot = Mrot*Mhshear*xy;
-xyrottrans = xyrot + repmat((grid_offset+hexa_centers(grid_offset_hexa_ref,:))',1, size(xyrot,2));
+xyrottrans_all = xyrot + repmat((grid_offset+hexa_centers(grid_offset_hexa_ref,:))',1, size(xyrot,2));
 
 f= 0.001;
-xyrottrans_ = {};
+xyrottrans_byhexa = cell(numel(hexa_data), 1);
 for i=1:numel(hexa_data)
-    aa = xyrottrans(1,:) >= (1-f)*x_hexa(i,1) & xyrottrans(1,:) <= (1+f)*x_hexa(i,2);
-    bb = xyrottrans(2,:) >= (1-f)*y_hexa(i,1) & xyrottrans(2,:) <= (1+f)*y_hexa(i,2);
-    xyrottrans_{i} = xyrottrans(:, aa & bb);
+    filt_idx_x = xyrottrans_all(1,:) >= (1-f)*x_hexa(i,1) & xyrottrans_all(1,:) <= (1+f)*x_hexa(i,2);
+    filt_idx_y = xyrottrans_all(2,:) >= (1-f)*y_hexa(i,1) & xyrottrans_all(2,:) <= (1+f)*y_hexa(i,2);
+    xyrottrans_byhexa{i} = xyrottrans_all(:, filt_idx_x & filt_idx_y);
 end
 
+% Specify scaling transformation due to angled hexas
 alpha = 1/cos(hexa_overlap_angle);
-ddddd = [
+Mscale_ = [
     1 alpha
     alpha 1
     1 alpha
@@ -164,9 +159,9 @@ colormap(gca, 'bone')
 hold all
 
 for i=1:numel(hexa_data)
-    M = [ddddd(i,1) 0; 0 ddddd(i,2)];
-    xyrottrans__  = M*(xyrottrans_{i} - hexa_centers(i,:)') + hexa_centers(i,:)';
+    Mscale = [Mscale_(i,1) 0; 0 Mscale_(i,2)];
+    xyrottransscale  = Mscale*(xyrottrans_byhexa{i} - hexa_centers(i,:)') + hexa_centers(i,:)';
     
-    plot(xyrottrans__(1,:), xyrottrans__(2,:), 'o');
+    plot(xyrottransscale(1,:), xyrottransscale(2,:), 'o');
     axis equal
 end
