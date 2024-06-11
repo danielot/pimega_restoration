@@ -2,42 +2,37 @@
 dataset_name = 'grid_module1_center_000';
 raw_data = h5read(sprintf('CAT/%s.hdf5', dataset_name),'/entry/data/data');
 
+%% Detector Parameters
+px_array = [256 256];           % [pixels]
+chip_array = [12 12];           % [chips]
+hexa_array = [2 12];            % [hexas]
+module_array = [2 2];           % [modules]
 
-%% Clean up the data
-th_lo = 0;
-th_hi = Inf;
+chip_gap = 3;                   % [pixels]
 
-raw_data_filtered = raw_data;
-raw_data_filtered(raw_data_filtered > th_hi) = 0;
-raw_data_filtered(raw_data_filtered < th_lo) = 0;
+module_gap_x = [                % [pixels]
+    0   8
+    4   3
+    ];
 
-%% Parameters
-px_array = [256 256];                   % [pixels]
-chip_array = [12 12];                   % [pixels]
-hexa_array = [2 12];                    % [pixels]
-module_array = [2 2];                   % [pixels]
+module_gap_y = [                % [pixels]
+    2   0
+    6   7
+    ];
 
-chip_gap = 3;                           % [pixels]
-module_gap_x = [                        % [pixels]
-    0 8; ...
-    4 3];
-module_gap_y = [                        % [pixels]
-    2 0; ...
-    6 7];
-hexa_gap = {};                          % [pixels]
-hexa_gap{1,1} = [1 0 1 0 0];
-hexa_gap{2,1} = [0 1 0 0 0];
-hexa_gap{1,2} = [0 0 0 0 0];
-hexa_gap{2,2} = [0 0 0 0 2];
-hexa_overlap_angle = 6.75*pi/180;       % [radians]
+hexa_gap = cell(module_array);  % [pixels]
+hexa_gap{1,1} = [0 0 1 0 0];    % Module 1
+hexa_gap{2,1} = [0 1 0 0 0];    % Module 2
+hexa_gap{1,2} = [0 0 0 0 0];    % Module 3
+hexa_gap{2,2} = [0 0 0 0 2];    % Module 4
 
-th_roi_sum_lo = 120e3;                  % [counts]
-th_roi_sum_hi = 172e3;                  % [counts]
+hexa_tilt = 6.75*pi/180;        % [radians]
 
+pixel_size = 55e-6;             % [meters]
+
+%% Sample parameters
 sample_detector_distance = 7;           % [meters]
 dft_lobes_step = [13.140 13.122];       % [pixels]
-pixel_size = 55e-6;                     % [meters]
-
 
 switch dataset_name
     case 'grid_module1_000'
@@ -51,7 +46,7 @@ switch dataset_name
     case 'grid_module2_000'
         grid_range_x = [-200 80];           % [pixels]
         grid_range_y = [-70 181];           % [pixels]
-        grid_offset = [-40.5 83.4];           % [pixels]
+        grid_offset = [-40.5 83.4];         % [pixels]
         grid_offset_hexa_ref = 6;
         grid_rot_angle = -0.00355;          % [radians]
         grid_shear_angle = -0.006;          % [radians]
@@ -75,7 +70,7 @@ switch dataset_name
     case 'grid_module1_center_000'
         grid_range_x = [-170 150];           % [pixels]
         grid_range_y = [-190 150];           % [pixels]
-        grid_offset = [617.9 -2.27];   % [pixels]
+        grid_offset = [617.9 -2.27];         % [pixels]
         grid_offset_hexa_ref = 11;
         grid_rot_angle = -0.00355;          % [radians]
         grid_shear_angle = -0.006;          % [radians]
@@ -83,21 +78,22 @@ end
 
 %% Assemble sets of data per chip, per hexa and per module
 % Assemble chip sets
-chip_data = pimega_chip_data(raw_data_filtered, px_array, chip_array);
+chip_data = pimega_chip_data(raw_data, px_array, chip_array);
+
+[ycoord, xcoord] = meshgrid(1:size(raw_data, 2), 1:size(raw_data, 1));
+chip_data_x = pimega_chip_data(xcoord, px_array, chip_array);
+chip_data_y = pimega_chip_data(ycoord, px_array, chip_array);
 
 % Assemble hexa sets and add gaps between chips
 hexa_data = pimega_hexa_data(chip_data, chip_array, chip_gap, hexa_array);
+hexa_data_x = pimega_hexa_data(chip_data_x, chip_array, chip_gap, hexa_array);
+hexa_data_y = pimega_hexa_data(chip_data_y, chip_array, chip_gap, hexa_array);
 
 % Regrid data
-alpha = cos(hexa_overlap_angle);
-xregrid = -(px_array(1)-1)/2:(px_array(1)-1)/2;
-yregrid = -(5*chip_gap + 6*px_array(2)-1)/2:(5*chip_gap + 6*px_array(2)-1)/2;  % FIXME: harcoded values (5, 6)
-[xrealmesh, yrealmesh] = meshgrid(xregrid*alpha,yregrid);
-[xregridmesh, yregridmesh] = meshgrid(xregrid,yregrid);
-for i=1:numel(hexa_data)
-    hexa_data{i} = griddata(xrealmesh, yrealmesh, double(hexa_data{i}), xregridmesh, yregridmesh, 'nearest');
-    hexa_data{i}(hexa_data{i}<0) = 0;
-end
+scaling = [cos(hexa_tilt) 1];
+hexa_data = regrid_hexa_data(hexa_data, px_array, chip_gap, scaling);
+hexa_data_x = regrid_hexa_data(hexa_data_x, px_array, chip_gap, scaling);
+hexa_data_y = regrid_hexa_data(hexa_data_y, px_array, chip_gap, scaling);
 
 % Reference number of each hexa
 hexa_ref = cell(size(hexa_data));
@@ -108,10 +104,15 @@ end
 % Assemble module sets and add gaps between hexas
 module_data = pimega_module_data(hexa_data, hexa_array, hexa_gap, module_array);
 module_hexa_ref = pimega_module_data(hexa_ref, hexa_array, hexa_gap, module_array);
+module_data_x = pimega_module_data(hexa_data_x, hexa_array, hexa_gap, module_array);
+module_data_y = pimega_module_data(hexa_data_y, hexa_array, hexa_gap, module_array);
 
 %% Assemble PIMEGA 540D detector by applying nominal rotations of modules and add gaps between modules
 detector_data = pimega_540d_data(module_data, module_gap_x, module_gap_y);
 detector_hexa_ref = pimega_540d_data(module_hexa_ref, module_gap_x, module_gap_y);
+detector_data_x = pimega_540d_data(module_data_x, module_gap_x, module_gap_y);
+detector_data_y = pimega_540d_data(module_data_y, module_gap_x, module_gap_y);
+
 [x_hexa,y_hexa,hexa_centers] = find_hexa_position(detector_hexa_ref, 1:numel(hexa_data));
 
 %%
@@ -142,16 +143,6 @@ colormap(gca, 'bone')
 hold all
 
 for i=1:numel(hexa_data)
-    plot(xyrottrans_byhexa{i}(1,:), xyrottrans_byhexa{i}(2,:), 'o');
-    axis equal
+    plot(xyrottrans_byhexa{i}(1,:), xyrottrans_byhexa{i}(2,:), '+', 'LineWidth', 2);    
 end
-
-%%
-figure;
-imagesc(log(double(detector_data)));
-colormap(gca, 'bone')
-hold all
-
-plot(xyrottrans_all(1,:), xyrottrans_all(2,:), 'xr', 'LineWidth', 2);
 axis equal
-
