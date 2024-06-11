@@ -19,10 +19,10 @@ module_array = [2 2];                   % [pixels]
 
 chip_gap = 3;                           % [pixels]
 module_gap_x = [                        % [pixels]
-    0 8; ...                
+    0 8; ...
     4 3];
 module_gap_y = [                        % [pixels]
-    2 0; ...                
+    2 0; ...
     6 7];
 hexa_gap = {};                          % [pixels]
 hexa_gap{1,1} = [1 0 1 0 0];
@@ -88,6 +88,18 @@ chip_data = pimega_chip_data(raw_data_filtered, px_array, chip_array);
 % Assemble hexa sets and add gaps between chips
 hexa_data = pimega_hexa_data(chip_data, chip_array, chip_gap, hexa_array);
 
+% Regrid data
+alpha = cos(hexa_overlap_angle);
+xregrid = -(px_array(1)-1)/2:(px_array(1)-1)/2;
+yregrid = -(5*chip_gap + 6*px_array(2)-1)/2:(5*chip_gap + 6*px_array(2)-1)/2;  % FIXME: harcoded values (5, 6)
+[xrealmesh, yrealmesh] = meshgrid(xregrid*alpha,yregrid);
+[xregridmesh, yregridmesh] = meshgrid(xregrid,yregrid);
+for i=1:numel(hexa_data)
+    hexa_data{i} = griddata(xrealmesh, yrealmesh, double(hexa_data{i}), xregridmesh, yregridmesh, 'nearest');
+    hexa_data{i}(hexa_data{i}<0) = 0;
+end
+
+% Reference number of each hexa
 hexa_ref = cell(size(hexa_data));
 for i=1:numel(hexa_data)
     hexa_ref{i} = repmat(i, size(hexa_data{i}));
@@ -123,35 +135,6 @@ for i=1:numel(hexa_data)
     xyrottrans_byhexa{i} = xyrottrans_all(:, filt_idx_x & filt_idx_y);
 end
 
-% Specify scaling transformation due to angled hexas
-alpha = 1/cos(hexa_overlap_angle);
-Mscale_ = [
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    alpha 1
-    1 alpha
-    ];
-
 %% Check results
 figure;
 imagesc(log(double(detector_data)));
@@ -159,9 +142,16 @@ colormap(gca, 'bone')
 hold all
 
 for i=1:numel(hexa_data)
-    Mscale = [Mscale_(i,1) 0; 0 Mscale_(i,2)];
-    xyrottransscale  = Mscale*(xyrottrans_byhexa{i} - hexa_centers(i,:)') + hexa_centers(i,:)';
-    
-    plot(xyrottransscale(1,:), xyrottransscale(2,:), 'o');
+    plot(xyrottrans_byhexa{i}(1,:), xyrottrans_byhexa{i}(2,:), 'o');
     axis equal
 end
+
+%%
+figure;
+imagesc(log(double(detector_data)));
+colormap(gca, 'bone')
+hold all
+
+plot(xyrottrans_all(1,:), xyrottrans_all(2,:), 'xr', 'LineWidth', 2);
+axis equal
+
