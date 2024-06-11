@@ -22,7 +22,7 @@ module_gap = 6;
 
 %% Assemble sets of data per chip, per hexa and per module
 chip_data = pimega_chip_data(raw_data_filtered, px_array, chip_array);
-hexa_data = pimega_hexa_data(chip_data, px_array, chip_array, chip_gap, hexa_array);
+hexa_data = pimega_hexa_data(chip_data, chip_array, chip_gap, hexa_array);
 module_data = pimega_module_data(hexa_data, hexa_array, hexa_gap, module_array);
 detector_data = pimega_540d_data(module_data, module_gap);
 
