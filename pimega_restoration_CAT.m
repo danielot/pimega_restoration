@@ -86,8 +86,8 @@ module_data_y = pimega_module_data_from_raw(ycoord, det);
 detector_data_y = pimega_540d_data(module_data_y, det);
 
 % % Detector data
-% module_data = pimega_module_data_from_raw(raw_data, det);
-% detector_data = pimega_540d_data(module_data, det);
+module_data = pimega_module_data_from_raw(raw_data, det);
+detector_data = pimega_540d_data(module_data, det);
 
 % Reference number of each hexa
 hexa_ref = cell(size(hexa_data));

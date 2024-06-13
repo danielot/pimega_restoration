@@ -21,15 +21,27 @@ for i=1:detector.chip_array(1)
     end
 end
 
-function hexa_data = regrid_hexa_data(hexa_data, detector, interp_method)
+function hexa_data = pimega_hexa_data(chip_data, chip_array, chip_gap, hexa_array)
 
-xregrid = -(detector.px_array(1)-1)/2:(detector.px_array(1)-1)/2;
-yregrid = -(5*detector.chip_gap + 6*detector.px_array(2)-1)/2:(5*detector.chip_gap + 6*detector.px_array(2)-1)/2;  % FIXME: harcoded values 5 an 6
-[xrealmesh, yrealmesh] = meshgrid(xregrid*cos(detector.hexa_tilt),yregrid*detector);
-[xregridmesh, yregridmesh] = meshgrid(xregrid,yregrid);
-for i=1:numel(hexa_data)
-    hexa_data{i} = griddata(xrealmesh, yrealmesh, double(hexa_data{i}), xregridmesh, yregridmesh, interp_method);
-    hexa_data{i}(hexa_data{i}<0) = 0;
+nx_hexa = chip_array(1)/hexa_array(1);
+ny_hexa = chip_array(2)/hexa_array(2);
+
+if ~iscell(chip_gap) && isscalar(chip_gap)
+    chip_gap_ = cell(hexa_array);
+    chip_gap_(:) = {repmat(chip_gap,1,nx_hexa-1)};
+    chip_gap = chip_gap_;
+end
+
+hexa_data = cell(hexa_array);
+for i=1:hexa_array(1)
+    for j=1:hexa_array(2)
+        hexa = cell(1);
+        hexa(1:2:2*nx_hexa-1) = chip_data((i-1)*nx_hexa + (1:nx_hexa), (j-1)*ny_hexa + (1:ny_hexa));
+        for k=1:nx_hexa-1
+            hexa{2*k} = nan(chip_gap{i,j}(k), size(chip_data{1},2));
+        end
+        hexa_data{i,j} = vertcat(hexa{:});
+    end
 end
 
 function module_data = pimega_module_data(hexa_data, detector)
@@ -53,4 +65,15 @@ for i=1:detector.module_array(1)
         end
         module_data{i,j} = horzcat(module{:});
     end
+end
+
+function hexa_data = regrid_hexa_data(hexa_data, detector, interp_method)
+
+xregrid = -(detector.px_array(1)-1)/2:(detector.px_array(1)-1)/2;
+yregrid = -(5*detector.chip_gap + 6*detector.px_array(2)-1)/2:(5*detector.chip_gap + 6*detector.px_array(2)-1)/2;  % FIXME: harcoded values 5 an 6
+[xrealmesh, yrealmesh] = meshgrid(xregrid*cos(detector.hexa_tilt),yregrid*detector);
+[xregridmesh, yregridmesh] = meshgrid(xregrid,yregrid);
+for i=1:numel(hexa_data)
+    hexa_data{i} = griddata(xrealmesh, yrealmesh, double(hexa_data{i}), xregridmesh, yregridmesh, interp_method);
+    hexa_data{i}(hexa_data{i}<0) = 0;
 end
