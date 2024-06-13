@@ -26,7 +26,7 @@ det.hexa_gap{2,1} = [0 0 0 0 0];    % Module 2
 det.hexa_gap{1,2} = [0 0 0 0 0];    % Module 3
 det.hexa_gap{2,2} = [0 0 0 0 0];    % Module 4
 
-det.hexa_tilt = 6.87*pi/180;        % [radians]
+det.hexa_tilt = 0*6.87*pi/180;        % [radians]
 
 pixel_size = 55e-6;             % [meters]
 
@@ -80,23 +80,23 @@ end
 
 % Mapping data 
 [ycoord, xcoord] = meshgrid(1:size(raw_data, 2), 1:size(raw_data, 1));
-module_data_x = pimega_module_data_from_raw(xcoord, det);
+[module_data_x, hexa_data_x] = pimega_module_data_from_raw(xcoord, det);
 detector_data_x = pimega_540d_data(module_data_x, det);
 module_data_y = pimega_module_data_from_raw(ycoord, det);
 detector_data_y = pimega_540d_data(module_data_y, det);
 
-% % Detector data
+% Detector data
 module_data = pimega_module_data_from_raw(raw_data, det);
 detector_data = pimega_540d_data(module_data, det);
 
 % Reference number of each hexa
-hexa_ref = cell(size(hexa_data));
-for i=1:numel(hexa_data)
-    hexa_ref{i} = repmat(i, size(hexa_data{i}));
+hexa_ref = cell(hexa_data_x);
+for i=1:numel(hexa_data_x)
+    hexa_ref{i} = repmat(i, size(hexa_data_x{i}));
 end
 module_hexa_ref = pimega_module_data(hexa_ref, det);
 detector_hexa_ref = pimega_540d_data(module_hexa_ref, det);
-[x_hexa,y_hexa,hexa_centers] = find_hexa_position(detector_hexa_ref, 1:numel(hexa_data));
+[x_hexa,y_hexa,hexa_centers] = find_hexa_position(detector_hexa_ref, 1:numel(hexa_data_x));
 
 %% Take into account conical beam
 angle_step = atan(dft_lobes_step*pixel_size/sample_detector_distance);
@@ -111,8 +111,8 @@ xyrot = Mrot*Mhshear*xy;
 xyrottrans_all = xyrot + repmat((grid_offset+hexa_centers(grid_offset_hexa_ref,:))',1, size(xyrot,2));
 
 f= 0.001;
-xyrottrans_byhexa = cell(numel(hexa_data), 1);
-for i=1:numel(hexa_data)
+xyrottrans_byhexa = cell(numel(hexa_data_x), 1);
+for i=1:numel(hexa_data_x)
     filt_idx_x = xyrottrans_all(1,:) >= (1-f)*x_hexa(i,1) & xyrottrans_all(1,:) <= (1+f)*x_hexa(i,2);
     filt_idx_y = xyrottrans_all(2,:) >= (1-f)*y_hexa(i,1) & xyrottrans_all(2,:) <= (1+f)*y_hexa(i,2);
     xyrottrans_byhexa{i} = xyrottrans_all(:, filt_idx_x & filt_idx_y);
@@ -124,7 +124,7 @@ imagesc(log(double(detector_data)));
 colormap(gca, 'bone')
 hold all
 
-for i=1:numel(hexa_data)
+for i=1:numel(hexa_data_x)
     plot(xyrottrans_byhexa{i}(1,:), xyrottrans_byhexa{i}(2,:), '+', 'LineWidth', 2);    
 end
 axis equal
