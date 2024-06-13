@@ -3,32 +3,7 @@ dataset_name = 'grid_module1_center_000';
 raw_data = h5read(sprintf('CAT/%s.hdf5', dataset_name),'/entry/data/data');
 
 %% Detector Parameters
-det.px_array = [256 256];           % [pixels]
-det.chip_array = [12 12];           % [chips]
-det.hexa_array = [2 12];            % [hexas]
-det.module_array = [2 2];           % [modules]
-
-det.chip_gap = 3;                   % [pixels]
-
-det.module_gap_x = [                % [pixels]
-    0   8
-    4   3
-    ];
-
-det.module_gap_y = [                % [pixels]
-    2   0
-    6   7
-    ];
-
-det.hexa_gap = cell(det.module_array);  % [pixels]
-det.hexa_gap{1,1} = [0 0 0 0 0];    % Module 1
-det.hexa_gap{2,1} = [0 0 0 0 0];    % Module 2
-det.hexa_gap{1,2} = [0 0 0 0 0];    % Module 3
-det.hexa_gap{2,2} = [0 0 0 0 0];    % Module 4
-
-det.hexa_tilt = 0*6.87*pi/180;        % [radians]
-
-pixel_size = 55e-6;             % [meters]
+det = detparam('pimega_540D', '2', '');
 
 %% Sample parameters
 sample_detector_distance = 7;           % [meters]
@@ -99,9 +74,9 @@ detector_hexa_ref = pimega_540d_data(module_hexa_ref, det);
 [x_hexa,y_hexa,hexa_centers] = find_hexa_position(detector_hexa_ref, 1:numel(hexa_data_x));
 
 %% Take into account conical beam
-angle_step = atan(dft_lobes_step*pixel_size/sample_detector_distance);
-x = tan((grid_range_x(1):grid_range_x(end))*angle_step(1))*sample_detector_distance/pixel_size;
-y = tan((grid_range_y(1):grid_range_y(end))*angle_step(2))*sample_detector_distance/pixel_size;
+angle_step = atan(dft_lobes_step*det.pixel_size/sample_detector_distance);
+x = tan((grid_range_x(1):grid_range_x(end))*angle_step(1))*sample_detector_distance/det.pixel_size;
+y = tan((grid_range_y(1):grid_range_y(end))*angle_step(2))*sample_detector_distance/det.pixel_size;
 
 [xmesh, ymesh] = meshgrid(x,y);
 xy = [xmesh(:)'; ymesh(:)'];
