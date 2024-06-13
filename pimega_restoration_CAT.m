@@ -11,40 +11,30 @@ dft_lobes_step = [13.140 13.122];       % [pixels]
 
 switch dataset_name
     case 'grid_module1_000'
-        grid_range_x = [-67 168];           % [pixels]
-        grid_range_y = [-73 163];           % [pixels]
         grid_offset = [111.4 69.6];         % [pixels]
         grid_offset_hexa_ref = 7;
         grid_rot_angle = -0.00355;          % [radians]
         grid_shear_angle = -0.006;          % [radians]
         
     case 'grid_module2_000'
-        grid_range_x = [-200 80];           % [pixels]
-        grid_range_y = [-70 181];           % [pixels]
         grid_offset = [-40.5 83.4];         % [pixels]
         grid_offset_hexa_ref = 6;
         grid_rot_angle = -0.00355;          % [radians]
         grid_shear_angle = -0.006;          % [radians]
         
     case 'grid_module3_000'
-        grid_range_x = [-80 200];           % [pixels]
-        grid_range_y = [-181 55];           % [pixels]
         grid_offset = [-26.7 47.3];         % [pixels]
         grid_offset_hexa_ref = 19;
         grid_rot_angle = -0.00355;          % [radians]
         grid_shear_angle = -0.006;          % [radians]
         
     case 'grid_module4_000'
-        grid_range_x = [-200 60];           % [pixels]
-        grid_range_y = [-200 70];           % [pixels]
         grid_offset = [78.2 -68.55];        % [pixels]
         grid_offset_hexa_ref = 18;
         grid_rot_angle = -0.00355;          % [radians]
         grid_shear_angle = -0.006;          % [radians]
         
     case 'grid_module1_center_000'
-        grid_range_x = [-170 150];           % [pixels]
-        grid_range_y = [-190 150];           % [pixels]
         grid_offset = [617.9 -2.27];         % [pixels]
         grid_offset_hexa_ref = 11;
         grid_rot_angle = -0.00355;          % [radians]
@@ -74,6 +64,11 @@ detector_hexa_ref = pimega_540d_data(module_hexa_ref, det);
 [x_hexa,y_hexa,hexa_centers] = find_hexa_position(detector_hexa_ref, 1:numel(hexa_data_x));
 
 %% Take into account conical beam
+grid_range_x = ([1 size(detector_data,1)] - hexa_centers(grid_offset_hexa_ref,1) - grid_offset(1))/dft_lobes_step(1);
+grid_range_x = [floor(grid_range_x(1)) ceil(grid_range_x(2))];
+grid_range_y = ([1 size(detector_data,2)] - hexa_centers(grid_offset_hexa_ref,2) - grid_offset(2))/dft_lobes_step(2);
+grid_range_y = [floor(grid_range_y(1)) ceil(grid_range_y(2))];
+
 angle_step = atan(dft_lobes_step*det.pixel_size/sample_detector_distance);
 x = tan((grid_range_x(1):grid_range_x(end))*angle_step(1))*sample_detector_distance/det.pixel_size;
 y = tan((grid_range_y(1):grid_range_y(end))*angle_step(2))*sample_detector_distance/det.pixel_size;
