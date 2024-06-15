@@ -47,20 +47,17 @@ end
 [ycoord, xcoord] = meshgrid(1:size(raw_data, 2), 1:size(raw_data, 1));
 [module_data_x, hexa_data_x] = pimega_module_data_from_raw(xcoord, det);
 detector_data_x = pimega_540d_data(module_data_x, det);
-module_data_y = pimega_module_data_from_raw(ycoord, det);
-detector_data_y = pimega_540d_data(module_data_y, det);
+detector_data_y = pimega_540d_data(pimega_module_data_from_raw(ycoord, det), det);
 
 % Detector data
-module_data = pimega_module_data_from_raw(raw_data, det);
-detector_data = pimega_540d_data(module_data, det);
+detector_data = pimega_540d_data(pimega_module_data_from_raw(raw_data, det), det);
 
 % Reference number of each hexa
 hexa_ref = cell(hexa_data_x);
 for i=1:numel(hexa_data_x)
     hexa_ref{i} = repmat(i, size(hexa_data_x{i}));
 end
-module_hexa_ref = pimega_module_data(hexa_ref, det);
-detector_hexa_ref = pimega_540d_data(module_hexa_ref, det);
+detector_hexa_ref = pimega_540d_data(pimega_module_data(hexa_ref, det), det);
 [x_hexa,y_hexa,hexa_centers] = find_hexa_position(detector_hexa_ref, 1:numel(hexa_data_x));
 
 %% Take into account conical beam
