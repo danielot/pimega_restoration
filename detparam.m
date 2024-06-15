@@ -1,10 +1,10 @@
-function detector = detparam(model, serial_number, assembly_date)
+function detector = detparam(model, serial_number, assembly)
 
 switch model
     case 'pimega_540D'
         switch serial_number
             case '2'
-                switch assembly_date
+                switch assembly
                     otherwise
                         detector.px_array = [256 256];           % [pixels]
                         detector.chip_array = [12 12];           % [chips]
