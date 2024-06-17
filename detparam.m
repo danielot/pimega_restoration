@@ -19,8 +19,8 @@ switch model
                             ];
                         
                         detector.module_gap_y = [                % [pixels]
-                            2   0
-                            6   7
+                            3   0
+                            5   8
                             ];
                         
                         detector.hexa_gap = cell(detector.module_array);  % [pixels]
