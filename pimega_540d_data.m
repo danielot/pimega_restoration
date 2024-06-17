@@ -23,8 +23,6 @@ module2 = module2(:,end:-1:1);
 module3 = module3(end:-1:1,:);
 module4 = module4(end:-1:1,end:-1:1)';
 
-mn = size(module1,1);
-
 if detector.module_gap_x(2,1) > detector.module_gap_x(1,1)
     module1 = [nan(size(module1,1), detector.module_gap_x(2,1)-detector.module_gap_x(1,1)) module1 nan(size(module1,1), detector.module_gap_x(1,1))];
     module3 = [module3 nan(size(module3,1), detector.module_gap_x(2,1))];
