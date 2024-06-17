@@ -1,4 +1,4 @@
-function hexa_data = regrid_hexa_data(hexa_data, detector, interp_method)
+function hexa_data = pimega_regrid_hexa_data(hexa_data, detector, interp_method)
 
 if nargin < 3
     interp_method = 'nearest';
