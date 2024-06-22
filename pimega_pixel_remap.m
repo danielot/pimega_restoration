@@ -5,9 +5,9 @@ ny = det.chip_array(1)*det.px_array(1);
 
 % Mapping data
 [ycoord, xcoord] = meshgrid(1:ny, 1:nx);
-[module_data_x, hexa_data_x] = pimega_module_data_from_raw(xcoord, det);
-pxremap.x = pimega_540d_data(module_data_x, det);                               % FIXME: should not be 540D-specifc
-pxremap.y = pimega_540d_data(pimega_module_data_from_raw(ycoord, det), det);    % FIXME: should not be 540D-specifc
+[module_data_x, hexa_data_x] = pimega_module_data_from_raw(xcoord, det, 'nearest');
+pxremap.x = pimega_540d_data(module_data_x, det);                                          % FIXME: should not be 540D-specifc
+pxremap.y = pimega_540d_data(pimega_module_data_from_raw(ycoord, det, 'nearest'), det);    % FIXME: should not be 540D-specifc
 
 if nargout > 1
     % Reference number of each hexa
