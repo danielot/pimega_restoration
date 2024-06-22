@@ -7,5 +7,5 @@ end
 M = pimega_compression_matrix(size(hexa_data{1}, 2), cos(detector.hexa_tilt), interp_method);
 
 for i=1:numel(hexa_data)
-     hexa_data{i} = hexa_data{i}*M';
+     hexa_data{i} = double(hexa_data{i})*M';
 end
