@@ -6,28 +6,10 @@ dataset_filename = {
     %'CAT/grid_module1_center_000.hdf5'
     };
 
-pixel_map_filename = {
-    'CAT/pixel_remap_gap0.mat'
-    %'CAT/pixel_remap_gap0_module3_2pxup.mat'
-    %'CAT/pixel_remap_gap0_module3_1pxup_module4_1pxdown.mat'
-    'CAT/pixel_remap_gap0_module1_1pxup_module3_1pxup_module4_1pxdown.mat'
-    };
-
+restoration_method = 'pixel_split';
 
 ndata = numel(dataset_filename);
-npxremap = numel(pixel_map_filename);
-
-pxremap_ = cell(npxremap, 1);
-hexa_centers_ = cell(npxremap, 1);
-x_hexa_ = cell(npxremap, 1);
-y_hexa_ = cell(npxremap, 1);
-for i=1:npxremap
-    W = load(pixel_map_filename{i});
-    pxremap_{i} = W.pxremap;
-    hexa_centers_{i} = W.hexa_centers;
-    x_hexa_{i} = W.x_hexa;
-    y_hexa_{i} = W.y_hexa;
-end
+npxremap = 1; % FIXME
 
 nplot = ndata*npxremap;
 nploty = 3;
@@ -44,9 +26,6 @@ k = 1;
 for data_i = 1:ndata
     %% Read data
     raw_data = h5read(sprintf('%s', dataset_filename{data_i}),'/entry/data/data');
-    
-    %% Detector Parameters
-    det = detparam('pimega_540D', '2', '');
     
     %% Sample parameters
     sample_detector_distance = 7;           % [meters]
@@ -85,15 +64,19 @@ for data_i = 1:ndata
     end
     
     for j = 1:npxremap
+
+        %% Detector Parameters
+        det = detparam('pimega_540D', '2', '');
         
         %% Assemble sets of data per chip, per hexa and per module
-        % Detector data
-        pxremap = pxremap_{j};
-        hexa_centers = hexa_centers_{j};
-        x_hexa = x_hexa_{j};
-        y_hexa = y_hexa_{j};
-        
-        detector_data = apply_restoration(raw_data, pxremap);
+        if strcmpi(restoration_method, 'pixel_remap')
+            [pxremap, hexa_centers, x_hexa, y_hexa] = pimega_pixel_remap(det);
+            detector_data = apply_restoration(raw_data, pxremap);
+        elseif strcmpi(restoration_method, 'pixel_split')
+            [~, hexa_centers, x_hexa, y_hexa] = pimega_pixel_remap(det);
+            module_data = pimega_module_data_from_raw(raw_data, det, 'pixel_split');
+            detector_data = pimega_540d_data(module_data, det);
+        end
         
         %% Take into account conical beam
         grid_range_x = ([1 size(detector_data,1)] - hexa_centers(grid_offset_hexa_ref,1) - grid_offset(1))/dft_lobes_step(1);
@@ -172,5 +155,3 @@ linkaxes(ax2)
 n = 50;
 axis(ax(1), [-n n -n n])
 axis(ax2(1), [-n n -n n])
-
-
