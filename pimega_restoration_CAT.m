@@ -28,8 +28,8 @@ for data_i = 1:ndata
     raw_data = h5read(sprintf('%s', dataset_filename{data_i}),'/entry/data/data');
     
     %% Sample parameters
-    sample_detector_distance = 7;           % [meters]
-    dft_lobes_step = [13.14 13.11];       % [pixels]
+    sample_detector_distance = 7;               % [meters]
+    dft_lobes_step = [13.14 13.11];             % [pixels]
     
     switch dataset_filename{data_i}
         case 'CAT/grid_module1_000.hdf5'
@@ -57,7 +57,7 @@ for data_i = 1:ndata
             grid_shear_angle = -0.006;          % [radians]
             
         case 'CAT/grid_module1_center_000.hdf5'
-            grid_offset = [617.9 -2.27];         % [pixels]
+            grid_offset = [617.9 -2.27];        % [pixels]
             grid_offset_hexa_ref = 11;
             grid_rot_angle = -0.00355;          % [radians]
             grid_shear_angle = -0.006;          % [radians]
