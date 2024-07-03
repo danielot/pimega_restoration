@@ -64,7 +64,7 @@ for data_i = 1:ndata
     end
     
     for j = 1:npxremap
-
+        
         %% Detector Parameters
         det = detparam('pimega_540D', '2', '');
         
@@ -112,8 +112,8 @@ for data_i = 1:ndata
         nx_off = hexa_centers(grid_offset_hexa_ref,1) + grid_offset(1);
         ny_off = hexa_centers(grid_offset_hexa_ref,2) + grid_offset(2);
         
-detector_data(isnan(detector_data)) = 0;
-detector_data = imgaussfilt((double(detector_data)+1),2)+1;
+        detector_data(isnan(detector_data)) = 0;
+        detector_data = imgaussfilt((double(detector_data)+1),2)+1;
         
         figure(2000);
         ax(k) = subplot(nplotx, nploty, k);
@@ -141,11 +141,8 @@ detector_data = imgaussfilt((double(detector_data)+1),2)+1;
             plot(xyrottrans_byhexa{i}(1,:), xyrottrans_byhexa{i}(2,:), '+', 'LineWidth', 2);
         end
         axis equal
-
+        
         k = k+1;
-
-        
-        
     end
 end
 
